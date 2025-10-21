@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function - Custom Claims 사용 (더 안전)
+    function isAdmin() {
+      return request.auth != null && 
+             request.auth.token.role == 'admin';
+    }
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 역할이 변경되지 않도록 보호
+    function roleNotChanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']);
+    }
+    
+    // 사용자 프로필
+    match /users/{userId} {
+      // 읽기: 인증된 사용자만
+      allow read: if isAuthenticated();
+      
+      // 생성: 서버에서만 (Cloud Function)
+      allow create: if false;
+      
+      // 업데이트: 본인만, role 필드는 변경 불가
+      allow update: if isOwner(userId) && roleNotChanged();
+      
+      // 삭제: 관리자만
+      allow delete: if isAdmin();
+    }
+    
+    // 강의 (읽기만 허용, 쓰기는 서버에서만)
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if false; // Cloud Function에서만 처리
+    }
+    
+    // 수강 신청 (읽기만 허용, 등록은 서버에서만)
+    match /enrollments/{enrollmentId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Cloud Function에서만 처리
+    }
+    
+    // 공지사항 (읽기만 허용, 쓰기는 서버에서만)
+    match /notices/{noticeId} {
+      allow read: if true;
+      allow write: if false; // Cloud Function에서만 처리
+    }
+    
+    // 신청서 (본인 생성, 읽기만 허용, 상태 변경은 서버에서만)
+    match /applications/{applicationId} {
+      allow read: if isAuthenticated() && 
+                     (isOwner(resource.data.userId) || isAdmin());
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false; // Cloud Function에서만 처리
+    }
+    
+    // 과제 제출 (본인만 생성, 읽기, 수정/삭제는 서버에서만)
+    match /submissions/{submissionId} {
+      allow read: if isAuthenticated() && 
+                     (isOwner(resource.data.userId) || isAdmin());
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false; // Cloud Function에서만 처리
+    }
+  }
+}
