@@ -4,6 +4,42 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 const db = admin.firestore();
 
+// 입력 값 검증 헬퍼
+function sanitizeString(str) {
+  if (typeof str !== 'string') return '';
+  // HTML 태그 제거 (XSS 방지)
+  return str
+    .replace(/<script[^>]*>.*?<\/script>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .trim()
+    .substring(0, 10000); // 최대 길이 제한
+}
+
+function validateEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+function validateTitle(title) {
+  if (!title || typeof title !== 'string') {
+    throw new functions.https.HttpsError('invalid-argument', 'Title is required');
+  }
+  if (title.length < 2 || title.length > 200) {
+    throw new functions.https.HttpsError('invalid-argument', 'Title must be between 2 and 200 characters');
+  }
+  return sanitizeString(title);
+}
+
+function validateContent(content) {
+  if (!content || typeof content !== 'string') {
+    throw new functions.https.HttpsError('invalid-argument', 'Content is required');
+  }
+  if (content.length < 10 || content.length > 50000) {
+    throw new functions.https.HttpsError('invalid-argument', 'Content must be between 10 and 50000 characters');
+  }
+  return sanitizeString(content);
+}
+
 // 관리자 이메일 목록 (서버 측에서만 관리)
 const ADMIN_EMAILS = ['mistarcodm@gmail.com'];
 
@@ -14,6 +50,12 @@ const ADMIN_EMAILS = ['mistarcodm@gmail.com'];
 exports.onUserCreate = functions.auth.user().onCreate(async (user) => {
   try {
     const email = user.email?.toLowerCase();
+    
+    // 이메일 검증
+    if (!validateEmail(email)) {
+      throw new Error('Invalid email format');
+    }
+    
     const role = ADMIN_EMAILS.includes(email) ? 'admin' : 'student';
     
     // Firestore에 사용자 프로필 생성
@@ -37,6 +79,20 @@ exports.onUserCreate = functions.auth.user().onCreate(async (user) => {
     
     // Custom Claims 설정 (더 강력한 보안)
     await admin.auth().setCustomUserClaims(user.uid, { role });
+    
+    // 이메일 인증 링크 발송 (관리자 제외)
+    if (role !== 'admin' && !user.emailVerified) {
+      try {
+        const actionCodeSettings = {
+          url: 'https://dy-infosec.web.app/login',
+          handleCodeInApp: false,
+        };
+        await admin.auth().generateEmailVerificationLink(user.email, actionCodeSettings);
+        console.log(`Email verification sent to ${user.email}`);
+      } catch (error) {
+        console.error('Failed to send verification email:', error);
+      }
+    }
     
     console.log(`User ${user.email} created with role: ${role}`);
     return { success: true, role };
@@ -82,8 +138,17 @@ exports.createCourse = functions.https.onCall(async (data, context) => {
   }
   
   try {
+    // 입력 값 검증
+    const title = validateTitle(data.title);
+    const description = validateContent(data.description || '');
+    
     const courseData = {
-      ...data,
+      title,
+      description,
+      category: sanitizeString(data.category || ''),
+      level: ['beginner', 'intermediate', 'advanced'].includes(data.level) ? data.level : 'beginner',
+      duration: typeof data.duration === 'number' ? Math.max(0, Math.min(data.duration, 1000)) : 0,
+      curriculum: sanitizeString(data.curriculum || ''),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       enrollmentCount: 0,
@@ -161,8 +226,15 @@ exports.createNotice = functions.https.onCall(async (data, context) => {
   }
   
   try {
+    // 입력 값 검증
+    const title = validateTitle(data.title);
+    const content = validateContent(data.content);
+    
     const noticeData = {
-      ...data,
+      title,
+      content,
+      category: ['general', 'event', 'update', 'important'].includes(data.category) ? data.category : 'general',
+      isPinned: Boolean(data.isPinned),
       authorId: context.auth.uid,
       views: 0,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -320,7 +392,15 @@ exports.updateApplicationStatus = functions.https.onCall(async (data, context) =
   try {
     const { applicationId, status, note } = data;
     
-    await db.collection('applications').doc(applicationId).update({
+    const applicationRef = db.collection('applications').doc(applicationId);
+    const applicationSnap = await applicationRef.get();
+    if (!applicationSnap.exists) {
+      throw new functions.https.HttpsError('not-found', 'Application not found');
+    }
+
+    const applicationData = applicationSnap.data();
+    
+    await applicationRef.update({
       status,
       statusNote: note || '',
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -330,5 +410,75 @@ exports.updateApplicationStatus = functions.https.onCall(async (data, context) =
   } catch (error) {
     console.error('Error updating application status:', error);
     throw new functions.https.HttpsError('internal', 'Failed to update application status');
+  }
+});
+
+exports.confirmEnrollment = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  const isAdmin = await checkUserRole(context.auth.uid, 'admin');
+  if (!isAdmin) {
+    throw new functions.https.HttpsError('permission-denied', 'Only admins can confirm enrollment');
+  }
+
+  const { applicationId } = data;
+  if (!applicationId) {
+    throw new functions.https.HttpsError('invalid-argument', 'applicationId is required');
+  }
+
+  try {
+    const applicationRef = db.collection('applications').doc(applicationId);
+    const applicationSnap = await applicationRef.get();
+
+    if (!applicationSnap.exists) {
+      throw new functions.https.HttpsError('not-found', 'Application not found');
+    }
+
+    const applicationData = applicationSnap.data();
+    const { userId, courseId, status } = applicationData;
+
+    if (!userId || !courseId) {
+      throw new functions.https.HttpsError('failed-precondition', 'Invalid application data');
+    }
+
+    if (status !== 'FINAL_PASS' && status !== 'ENROLLED') {
+      throw new functions.https.HttpsError('failed-precondition', 'Application is not ready for enrollment');
+    }
+
+    const enrollmentQuery = await db.collection('enrollments')
+      .where('userId', '==', userId)
+      .where('courseId', '==', courseId)
+      .limit(1)
+      .get();
+
+    if (enrollmentQuery.empty) {
+      await db.collection('enrollments').add({
+        userId,
+        courseId,
+        progress: 0,
+        completedLectures: 0,
+        totalLectures: 0,
+        enrolledAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastAccessedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      await db.collection('courses').doc(courseId).update({
+        enrollmentCount: admin.firestore.FieldValue.increment(1),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+
+    await applicationRef.update({
+      status: 'ENROLLED',
+      enrollmentConfirmedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error confirming enrollment:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to confirm enrollment');
   }
 });

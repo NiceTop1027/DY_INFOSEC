@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { db } from '../config/firebase'
-import { collection, getDocs, query, orderBy } from 'firebase/firestore'
-import { Shield, Users, BookOpen, FileText, Settings, BarChart3 } from 'lucide-react'
+import { collection, getDocs } from 'firebase/firestore'
+import { Shield, Users, BookOpen, FileText, Settings, BarChart3, Mail } from 'lucide-react'
 
 export default function Admin() {
   const { user } = useAuthStore()
@@ -12,8 +12,10 @@ export default function Admin() {
     totalCourses: 0,
     totalNotices: 0,
     totalApplications: 0,
+    totalContacts: 0,
   })
   const [users, setUsers] = useState([])
+  const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -22,29 +24,47 @@ export default function Admin() {
 
   const loadData = async () => {
     try {
-      // 사용자 목록 가져오기
-      const usersQuery = query(collection(db, 'users'), orderBy('createdAt', 'desc'))
-      const usersSnapshot = await getDocs(usersQuery)
-      const usersData = usersSnapshot.docs.map(doc => ({
+      const usersCollection = collection(db, 'users')
+      const coursesCollection = collection(db, 'courses')
+      const noticesCollection = collection(db, 'notices')
+      const applicationsCollection = collection(db, 'applications')
+      const contactsCollection = collection(db, 'contacts')
+
+      const [usersSnapshot, coursesSnapshot, noticesSnapshot, applicationsSnapshot, contactsSnapshot] = await Promise.all([
+        getDocs(usersCollection),
+        getDocs(coursesCollection),
+        getDocs(noticesCollection),
+        getDocs(applicationsCollection),
+        getDocs(contactsCollection),
+      ])
+
+      const usersData = usersSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
-      }))
-      
-      // 강의 수 가져오기
-      const coursesSnapshot = await getDocs(collection(db, 'courses'))
-      
-      // 공지사항 수 가져오기
-      const noticesSnapshot = await getDocs(collection(db, 'notices'))
-      
-      // 신청서 수 가져오기
-      const applicationsSnapshot = await getDocs(collection(db, 'applications'))
-      
+        ...doc.data(),
+      })).sort((a, b) => {
+        // createdAt으로 정렬 (최신순)
+        const aTime = a.createdAt?.toMillis?.() || 0
+        const bTime = b.createdAt?.toMillis?.() || 0
+        return bTime - aTime
+      })
+
+      const contactsData = contactsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })).sort((a, b) => {
+        const aTime = a.createdAt?.toMillis?.() || 0
+        const bTime = b.createdAt?.toMillis?.() || 0
+        return bTime - aTime
+      })
+
       setUsers(usersData)
+      setContacts(contactsData)
       setStats({
         totalUsers: usersData.length,
         totalCourses: coursesSnapshot.size,
         totalNotices: noticesSnapshot.size,
         totalApplications: applicationsSnapshot.size,
+        totalContacts: contactsData.length,
       })
       setLoading(false)
     } catch (error) {
@@ -109,6 +129,50 @@ export default function Admin() {
               <span className="text-3xl font-black text-white">{stats.totalApplications}</span>
             </div>
             <h3 className="text-gray-400 font-medium">Applications</h3>
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <Mail className="w-8 h-8 text-yellow-400" />
+              <span className="text-3xl font-black text-white">{stats.totalContacts}</span>
+            </div>
+            <h3 className="text-gray-400 font-medium">Contact Messages</h3>
+          </div>
+        </div>
+
+        {/* Contact Messages */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 mb-12">
+          <h2 className="text-2xl font-black text-white mb-6">CONTACT MESSAGES</h2>
+          <div className="space-y-4">
+            {contacts.length === 0 ? (
+              <p className="text-gray-400 text-center py-8">문의 내역이 없습니다.</p>
+            ) : (
+              contacts.slice(0, 5).map((contact) => (
+                <div key={contact.id} className="bg-black/40 border border-white/10 p-5 hover:border-purple-500/50 transition-all">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start gap-3 flex-1">
+                      <Mail className="w-5 h-5 text-purple-400 mt-1 flex-shrink-0" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-white font-bold">{contact.name}</p>
+                          <span className="px-2 py-0.5 text-xs font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                            {contact.category?.toUpperCase() || 'GENERAL'}
+                          </span>
+                        </div>
+                        <p className="text-gray-400 text-sm font-mono">{contact.email}</p>
+                        {contact.subject && (
+                          <p className="text-white text-sm font-semibold mt-2">{contact.subject}</p>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-500 whitespace-nowrap ml-4">
+                      {contact.createdAt?.toDate().toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-gray-300 text-sm ml-8 line-clamp-2">{contact.message}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

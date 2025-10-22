@@ -4,13 +4,13 @@ import {
   doc, 
   getDocs, 
   getDoc, 
-  addDoc, 
-  updateDoc, 
+  addDoc,
+  updateDoc,
   deleteDoc,
   query,
   orderBy,
   limit,
-  serverTimestamp 
+  serverTimestamp
 } from 'firebase/firestore'
 
 // 모든 공지사항 가져오기
@@ -37,12 +37,17 @@ export const getNotice = async (noticeId) => {
     const noticeSnap = await getDoc(noticeRef)
     
     if (noticeSnap.exists()) {
-      // 조회수 증가
-      await updateDoc(noticeRef, {
-        views: (noticeSnap.data().views || 0) + 1
-      })
+      const noticeData = { id: noticeSnap.id, ...noticeSnap.data() }
+
+      try {
+        await updateDoc(noticeRef, {
+          views: (noticeData.views || 0) + 1
+        })
+      } catch (err) {
+        console.warn('Failed to increment notice views (ignored):', err)
+      }
       
-      return { id: noticeSnap.id, ...noticeSnap.data() }
+      return noticeData
     }
     return null
   } catch (error) {

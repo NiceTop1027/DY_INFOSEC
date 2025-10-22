@@ -19,12 +19,13 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center relative overflow-hidden">
-                <Terminal className="w-6 h-6 text-white relative z-10" />
-                <div className="absolute inset-0 bg-white/20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-              </div>
+              <img 
+                src="https://i.namu.wiki/i/ObQ4LgeNZBe9Mz-E8da2_QVnq2TP-xoSU0cNj9m3c5rnVv0k1ag1X9W9a28WTtUTeksCmHmOFhBjtyBrgR3k-Q.png" 
+                alt="덕영고등학교 로고" 
+                className="w-10 h-10 object-contain group-hover:scale-110 transition-transform"
+              />
               <span className="text-xl font-black text-white tracking-tight">
-                DYㅣWHITE<span className="text-purple-400">HAT</span>
+                덕영고등학교<span className="text-purple-400">ㅣ정보보안소프트웨어과</span>
               </span>
             </Link>
           </div>
@@ -75,6 +76,11 @@ export default function Navbar() {
                     {user?.role === 'admin' && (
                       <Link to="/admin" className="block px-4 py-3 text-yellow-400 hover:text-yellow-300 hover:bg-white/5 border-b border-white/5">
                         Admin Panel
+                      </Link>
+                    )}
+                    {(user?.role === 'instructor' || user?.role === 'teacher') && (
+                      <Link to="/instructor" className="block px-4 py-3 text-blue-300 hover:text-blue-200 hover:bg-white/5 border-b border-white/5">
+                        Instructor Console
                       </Link>
                     )}
                     <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-red-400 hover:text-red-300 hover:bg-white/5">

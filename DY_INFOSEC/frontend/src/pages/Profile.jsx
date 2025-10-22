@@ -186,12 +186,13 @@ export default function Profile() {
                       <input
                         {...register('major')}
                         type="text"
-                        className="input"
+                        placeholder="전공을 입력하세요"
+                        className="w-full px-4 py-3 bg-black/50 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors font-mono"
                       />
                     </div>
                   </div>
 
-                  <button type="submit" className="btn btn-primary">
+                  <button type="submit" className="px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all">
                     저장하기
                   </button>
                 </form>
@@ -199,30 +200,30 @@ export default function Profile() {
 
               {activeTab === 'security' && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold mb-6">보안 설정</h2>
+                  <h2 className="text-3xl font-black text-white mb-8 tracking-wider">SECURITY</h2>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-bold text-gray-300 mb-2 tracking-wider">
                       현재 비밀번호
                     </label>
-                    <input type="password" className="input" />
+                    <input type="password" className="w-full px-4 py-3 bg-black/50 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors font-mono" />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-bold text-gray-300 mb-2 tracking-wider">
                       새 비밀번호
                     </label>
-                    <input type="password" className="input" />
+                    <input type="password" className="w-full px-4 py-3 bg-black/50 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors font-mono" />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-bold text-gray-300 mb-2 tracking-wider">
                       새 비밀번호 확인
                     </label>
-                    <input type="password" className="input" />
+                    <input type="password" className="w-full px-4 py-3 bg-black/50 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors font-mono" />
                   </div>
 
-                  <button className="btn btn-primary">
+                  <button className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all">
                     비밀번호 변경
                   </button>
                 </div>
@@ -230,26 +231,26 @@ export default function Profile() {
 
               {activeTab === 'notifications' && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold mb-6">알림 설정</h2>
+                  <h2 className="text-3xl font-black text-white mb-8 tracking-wider">NOTIFICATIONS</h2>
                   
                   <div className="space-y-4">
-                    <label className="flex items-center justify-between">
-                      <span className="text-gray-700">이메일 알림</span>
-                      <input type="checkbox" className="rounded border-gray-300 text-primary-600" />
+                    <label className="flex items-center justify-between p-4 bg-black/30 border border-white/10 hover:border-cyan-500/30 transition-colors">
+                      <span className="text-gray-200 font-medium">이메일 알림</span>
+                      <input type="checkbox" className="w-5 h-5 rounded border-white/20 bg-black/50 text-cyan-500 focus:ring-cyan-500" />
                     </label>
                     
-                    <label className="flex items-center justify-between">
-                      <span className="text-gray-700">공지사항 알림</span>
-                      <input type="checkbox" className="rounded border-gray-300 text-primary-600" />
+                    <label className="flex items-center justify-between p-4 bg-black/30 border border-white/10 hover:border-cyan-500/30 transition-colors">
+                      <span className="text-gray-200 font-medium">공지사항 알림</span>
+                      <input type="checkbox" className="w-5 h-5 rounded border-white/20 bg-black/50 text-cyan-500 focus:ring-cyan-500" />
                     </label>
                     
-                    <label className="flex items-center justify-between">
-                      <span className="text-gray-700">과제 마감 알림</span>
-                      <input type="checkbox" className="rounded border-gray-300 text-primary-600" />
+                    <label className="flex items-center justify-between p-4 bg-black/30 border border-white/10 hover:border-cyan-500/30 transition-colors">
+                      <span className="text-gray-200 font-medium">과제 마감 알림</span>
+                      <input type="checkbox" className="w-5 h-5 rounded border-white/20 bg-black/50 text-cyan-500 focus:ring-cyan-500" />
                     </label>
                   </div>
 
-                  <button className="btn btn-primary">
+                  <button className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold hover:shadow-lg hover:shadow-cyan-500/50 transition-all">
                     저장하기
                   </button>
                 </div>
@@ -257,15 +258,15 @@ export default function Profile() {
 
               {activeTab === 'privacy' && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold mb-6">개인정보 관리</h2>
+                  <h2 className="text-3xl font-black text-white mb-8 tracking-wider">PRIVACY</h2>
                   
-                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-sm text-yellow-800">
-                      회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.
+                  <div className="p-6 bg-yellow-500/10 border border-yellow-500/30">
+                    <p className="text-sm text-yellow-300 font-medium">
+                      ⚠️ 회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.
                     </p>
                   </div>
 
-                  <button className="btn bg-red-600 text-white hover:bg-red-700">
+                  <button className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold hover:shadow-lg hover:shadow-red-500/50 transition-all">
                     회원 탈퇴
                   </button>
                 </div>

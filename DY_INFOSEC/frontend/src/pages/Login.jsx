@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuthStore } from '../store/authStore'
-import { Terminal, Lock, Mail } from 'lucide-react'
+import { Terminal, Lock, Mail, AlertCircle } from 'lucide-react'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -16,6 +16,8 @@ export default function Login() {
     
     if (result.success) {
       navigate('/dashboard')
+    } else if (result.needsVerification) {
+      setError('이메일 인증이 필요합니다. 이메일을 확인하고 인증 링크를 클릭해주세요.')
     } else {
       setError(result.error || '로그인에 실패했습니다.')
     }
@@ -40,8 +42,18 @@ export default function Login() {
 
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8">
           {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 text-red-400">
-              <span className="font-mono text-sm">ERROR: {error}</span>
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-mono text-sm text-red-400 mb-2">ERROR: {error}</p>
+                  {error.includes('이메일 인증') && (
+                    <p className="text-xs text-gray-400">
+                      스팸 메일함을 포함하여 이메일을 확인해주세요.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 

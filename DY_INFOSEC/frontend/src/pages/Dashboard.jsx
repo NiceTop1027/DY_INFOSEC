@@ -133,28 +133,38 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {enrollments.slice(0, 2).map((enrollment, index) => (
+                {enrollments.map((enrollment, index) => {
+                  const gradients = [
+                    'from-purple-500 to-blue-500',
+                    'from-blue-500 to-cyan-500',
+                    'from-cyan-500 to-teal-500',
+                    'from-pink-500 to-purple-500'
+                  ]
+                  const gradient = gradients[index % gradients.length]
+                  
+                  return (
                   <div key={enrollment.id} className="group flex items-center justify-between p-6 bg-white/5 border border-white/10 hover:border-purple-500/50 transition-all">
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-14 h-14 bg-gradient-to-br ${index === 0 ? 'from-purple-500 to-blue-500' : 'from-blue-500 to-cyan-500'} flex items-center justify-center relative overflow-hidden`}>
+                    <div className="flex items-center space-x-4 flex-1">
+                      <div className={`w-14 h-14 bg-gradient-to-br ${gradient} flex items-center justify-center relative overflow-hidden`}>
                         <BookOpen className="w-7 h-7 text-white relative z-10" />
                         <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-all"></div>
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-bold text-white text-lg">{enrollment.course?.title || '강의'}</h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
-                            <div className={`h-full bg-gradient-to-r ${index === 0 ? 'from-purple-500 to-blue-500' : 'from-blue-500 to-cyan-500'}`} style={{width: `${enrollment.progress || 0}%`}}></div>
+                        <div className="flex items-center gap-3 mt-2">
+                          <div className="flex-1 max-w-xs h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div className={`h-full bg-gradient-to-r ${gradient} transition-all duration-500`} style={{width: `${enrollment.progress || 0}%`}}></div>
                           </div>
-                          <span className="text-sm text-gray-400 font-mono">{enrollment.progress || 0}%</span>
+                          <span className="text-sm text-gray-400 font-mono font-bold">{enrollment.progress || 0}%</span>
                         </div>
                       </div>
                     </div>
-                    <Link to="/my-classroom" className="px-6 py-2 bg-white/5 border border-white/20 text-white font-bold hover:bg-white/10 transition-all">
+                    <Link to={`/courses/${enrollment.courseId}/learn`} className="px-6 py-2 bg-white/5 border border-white/20 text-white font-bold hover:bg-white/10 transition-all">
                       학습하기
                     </Link>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

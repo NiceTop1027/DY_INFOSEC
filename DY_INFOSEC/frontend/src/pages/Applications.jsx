@@ -84,13 +84,15 @@ export default function Applications() {
             {applications.map((application) => {
               const statusBadge = getStatusBadge(application.status)
               const StatusIcon = statusBadge.icon
-              
+              const courseInfo = application.course || {}
+              const courseTitle = courseInfo.title || '강의 정보 없음'
+
               return (
                 <div key={application.id} className="group bg-black/40 backdrop-blur-xl border border-white/10 p-8 hover:border-purple-500/50 transition-all">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-4 mb-4">
-                        <h3 className="text-2xl font-black text-white">{application.course.title}</h3>
+                        <h3 className="text-2xl font-black text-white">{courseTitle}</h3>
                         <span className={`px-4 py-2 border text-sm font-bold flex items-center space-x-2 ${statusBadge.className}`}>
                           <StatusIcon className="w-4 h-4" />
                           <span>{statusBadge.label}</span>

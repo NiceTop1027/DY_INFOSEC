@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { getAllNotices, createNotice, updateNotice, deleteNotice } from '../../services/noticeService'
+import { storage } from '../../config/firebase'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import Resizer from 'react-image-file-resizer'
+import '../../styles/markdown-editor-custom.css'
 import { FileText, Plus, Edit, Trash2, X } from 'lucide-react'
 
 export default function ManageNotices() {
@@ -16,6 +20,76 @@ export default function ManageNotices() {
     category: 'general',
     isPinned: false
   })
+
+  const [uploading, setUploading] = useState(false)
+  const [imageSize, setImageSize] = useState('800')
+
+  const resizeImage = (file, maxWidth) => {
+    return new Promise((resolve) => {
+      Resizer.imageFileResizer(
+        file,
+        maxWidth,
+        maxWidth * 2,
+        'JPEG',
+        90,
+        0,
+        (blob) => resolve(blob),
+        'blob'
+      )
+    })
+  }
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드 가능합니다.')
+      return
+    }
+    
+    setUploading(true)
+    try {
+      const maxWidth = parseInt(imageSize)
+      const resizedBlob = await resizeImage(file, maxWidth)
+      
+      const timestamp = Date.now()
+      const fileName = `notices/${timestamp}_${file.name}`
+      const storageRef = ref(storage, fileName)
+      
+      await uploadBytes(storageRef, resizedBlob)
+      const downloadURL = await getDownloadURL(storageRef)
+      
+      const textarea = document.querySelector('textarea[name="content"]')
+      if (textarea) {
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+        const before = formData.content.substring(0, start)
+        const after = formData.content.substring(end)
+        setFormData({...formData, content: before + `![${file.name}](${downloadURL})` + after})
+      }
+    } catch (error) {
+      console.error('Image upload error:', error)
+      alert('이미지 업로드 중 오류가 발생했습니다: ' + error.message)
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  const insertLink = () => {
+    const url = prompt('링크 URL을 입력하세요:')
+    if (!url) return
+    const text = prompt('링크 텍스트를 입력하세요:', url)
+    const textarea = document.querySelector('textarea[name="content"]')
+    if (textarea) {
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const before = formData.content.substring(0, start)
+      const after = formData.content.substring(end)
+      setFormData({...formData, content: before + `[${text || url}](${url})` + after})
+    }
+  }
 
   useEffect(() => {
     loadNotices()
@@ -183,12 +257,31 @@ export default function ManageNotices() {
 
                   <div>
                     <label className="block text-sm font-bold text-gray-300 mb-2">CONTENT</label>
+                    <div className="flex flex-wrap items-center gap-2 p-2 bg-black/40 border border-white/10 mb-2">
+                      <select
+                        value={imageSize}
+                        onChange={(e) => setImageSize(e.target.value)}
+                        className="px-2 py-1 text-xs bg-black/60 border border-white/10 text-gray-300"
+                      >
+                        <option value="400">작게</option>
+                        <option value="600">중간</option>
+                        <option value="800">크게</option>
+                      </select>
+                      <label className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-white/10 text-gray-300 hover:bg-white/5 cursor-pointer">
+                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
+                        {uploading ? '업로드 중...' : '이미지'}
+                      </label>
+                      <button type="button" onClick={insertLink} className="px-2 py-1 text-xs border border-white/10 text-gray-300 hover:bg-white/5">
+                        링크
+                      </button>
+                    </div>
                     <textarea
+                      name="content"
                       required
                       rows={10}
                       value={formData.content}
                       onChange={(e) => setFormData({...formData, content: e.target.value})}
-                      className="w-full px-4 py-3 bg-black/50 border border-white/10 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                      className="w-full px-4 py-3 bg-black/50 border border-white/10 text-white focus:outline-none focus:border-purple-500 transition-colors font-mono text-sm"
                     />
                   </div>
 

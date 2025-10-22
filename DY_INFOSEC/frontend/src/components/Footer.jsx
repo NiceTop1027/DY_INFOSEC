@@ -8,15 +8,17 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                <Terminal className="w-5 h-5 text-white" />
-              </div>
+              <img 
+                src="https://i.namu.wiki/i/ObQ4LgeNZBe9Mz-E8da2_QVnq2TP-xoSU0cNj9m3c5rnVv0k1ag1X9W9a28WTtUTeksCmHmOFhBjtyBrgR3k-Q.png" 
+                alt="덕영고등학교" 
+                className="w-8 h-8 object-contain"
+              />
               <span className="text-lg font-black text-white">
-                DY_<span className="text-purple-400">WHITEHAT</span>
+                덕영고등학교<span className="text-purple-400">ㅣ정보보안소프트웨어과</span>
               </span>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
-              미래의 화이트해커를 양성하는<br />정보보안 전문 교육기관
+              미래의 화이트해커와<br />정보보안 전문가를 양성하는<br />특성화 학과
             </p>
             <div className="flex space-x-3 mt-6">
               <a href="#" className="w-10 h-10 bg-white/5 border border-white/10 flex items-center justify-center hover:border-purple-500/50 hover:bg-white/10 transition-all">
@@ -50,17 +52,17 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-bold mb-4 text-sm tracking-wider">CONTACT</h4>
             <ul className="space-y-3 text-sm">
+              <li className="flex items-start space-x-3 text-gray-400">
+                <MapPin className="w-4 h-4 text-purple-400 mt-0.5" />
+                <span>경기도 고양시 덕양구 화정동 868</span>
+              </li>
               <li className="flex items-center space-x-3 text-gray-400">
                 <Phone className="w-4 h-4 text-purple-400" />
-                <span>02-1234-5678</span>
+                <span>031-969-3800</span>
               </li>
               <li className="flex items-center space-x-3 text-gray-400">
                 <Mail className="w-4 h-4 text-purple-400" />
-                <span>info@whitehat.kr</span>
-              </li>
-              <li className="flex items-center space-x-3 text-gray-400">
-                <MapPin className="w-4 h-4 text-purple-400" />
-                <span>Seoul, Korea</span>
+                <span>deokyoung@hs.kr</span>
               </li>
             </ul>
           </div>
@@ -68,8 +70,12 @@ export default function Footer() {
         
         <div className="border-t border-white/10 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
-            <p>&copy; 2024 DY_WHITEHAT SCHOOL. All rights reserved.</p>
-            <p className="mt-2 md:mt-0">Made with <span className="text-purple-400">♥</span> for Security</p>
+            <div className="text-center md:text-left">
+              <p className="font-bold text-white mb-2">덕영고등학교 정보보안소프트웨어과</p>
+              <p>설립: 1974년 3월 1일 | 교훈: 성실, 근면, 봉사</p>
+              <p className="mt-1">&copy; 2024 Deokyoung High School. All rights reserved.</p>
+            </div>
+            <p className="mt-4 md:mt-0">Made with <span className="text-purple-400">♥</span> for Security</p>
           </div>
         </div>
       </div>

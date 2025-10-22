@@ -9,32 +9,32 @@ export default function FAQ() {
     {
       id: 1,
       category: 'GENERAL',
-      question: '두경정보보안학교는 어떤 곳인가요?',
-      answer: '두경정보보안학교는 미래의 화이트해커를 양성하는 정보보안 전문 교육기관입니다. 실무 중심의 교육과 현직 전문가 멘토링을 통해 실전 역량을 키울 수 있습니다.'
+      question: '덕영고등학교 정보보안소프트웨어과는 어떤 곳인가요?',
+      answer: '덕영고등학교 정보보안소프트웨어과는 미래의 화이트해커와 정보보안 전문가를 양성하는 특성화 학과입니다. 실무 중심의 교육과 현직 전문가 멘토링을 통해 실전 역량을 키울 수 있습니다.'
     },
     {
       id: 2,
       category: 'APPLICATION',
-      question: '지원 자격이 어떻게 되나요?',
-      answer: '정보보안에 관심이 있는 대학생 및 취업준비생이라면 누구나 지원 가능합니다. 기초 프로그래밍 지식이 있으면 더욱 좋습니다.'
+      question: '동아리 가입은 어떻게 하나요?',
+      answer: '덕영고등학교 정보보안소프트웨어과 재학생이라면 누구나 지원 가능합니다. 정보보안에 대한 열정과 배우고자 하는 의지가 있다면 환영합니다.'
     },
     {
       id: 3,
       category: 'COURSE',
       question: '교육 과정은 어떻게 구성되어 있나요?',
-      answer: '기초 교육부터 심화 교육, 팀 프로젝트까지 단계별로 구성되어 있습니다. 온라인 강의와 오프라인 실습을 병행하여 진행됩니다.'
+      answer: '기초 보안 개념부터 실전 해킹 기법, 팀 프로젝트까지 단계별로 구성되어 있습니다. 방과 후 활동과 주말 세미나를 통해 심화 학습을 진행합니다.'
     },
     {
       id: 4,
-      category: 'COURSE',
-      question: '수강료는 얼마인가요?',
-      answer: '본 교육은 무료로 제공되며, 우수 교육생에게는 교육 지원금도 지급됩니다.'
+      category: 'ACTIVITY',
+      question: '동아리 활동은 어떻게 진행되나요?',
+      answer: '주 2회 정기 모임을 통해 이론 학습과 실습을 진행하며, 월 1회 외부 전문가 특강과 해킹 대회 참가 기회가 제공됩니다. 방학 중에는 집중 프로젝트를 수행합니다.'
     },
     {
       id: 5,
       category: 'GENERAL',
-      question: '수료 후 혜택은 무엇인가요?',
-      answer: '수료증 발급, 우수 수료생 특전, 취업 연계 지원, 네트워킹 이벤트 참가 기회 등 다양한 혜택이 제공됩니다.'
+      question: '동아리 활동을 통해 얻을 수 있는 것은?',
+      answer: '정보보안 실무 역량 강화, 각종 보안 대회 참가 및 수상 경력, 생활기록부 기재를 통한 입시 우대, 선배-후배 멘토링 네트워크 구축 등 다양한 혜택이 있습니다.'
     }
   ]
 
@@ -43,8 +43,8 @@ export default function FAQ() {
       GENERAL: 'GENERAL',
       APPLICATION: 'APPLICATION',
       COURSE: 'COURSE',
-      TECHNICAL: 'TECHNICAL',
-      PAYMENT: 'PAYMENT'
+      ACTIVITY: 'ACTIVITY',
+      TECHNICAL: 'TECHNICAL'
     }
     return labels[category] || 'GENERAL'
   }

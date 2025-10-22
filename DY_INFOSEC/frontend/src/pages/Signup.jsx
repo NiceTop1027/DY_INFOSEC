@@ -2,20 +2,26 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuthStore } from '../store/authStore'
-import { Terminal, User, Mail, Lock } from 'lucide-react'
+import { Terminal, User, Mail, Lock, CheckCircle, AlertCircle } from 'lucide-react'
 
 export default function Signup() {
   const navigate = useNavigate()
   const { signup, loading } = useAuthStore()
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+  const [userEmail, setUserEmail] = useState('')
   const { register, handleSubmit, watch, formState: { errors } } = useForm()
   const password = watch('password')
 
   const onSubmit = async (data) => {
     setError('')
+    setSuccess(false)
     const result = await signup(data.email, data.password, data.displayName)
     
-    if (result.success) {
+    if (result.success && result.needsVerification) {
+      setSuccess(true)
+      setUserEmail(data.email)
+    } else if (result.success) {
       navigate('/dashboard')
     } else {
       setError(result.error || '회원가입에 실패했습니다.')
@@ -40,6 +46,36 @@ export default function Signup() {
         </div>
 
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-10">
+          {success && (
+            <div className="mb-6 p-6 bg-green-500/10 border border-green-500/50">
+              <div className="flex items-start gap-4">
+                <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0 mt-1" />
+                <div>
+                  <h3 className="text-lg font-bold text-green-400 mb-2">회원가입 완료!</h3>
+                  <p className="text-gray-300 mb-3">
+                    <span className="font-bold text-white">{userEmail}</span>로 인증 이메일이 발송되었습니다.
+                  </p>
+                  <div className="bg-black/30 border border-yellow-500/30 p-4 rounded mb-3">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-gray-300">
+                        <p className="font-bold text-yellow-400 mb-1">이메일이 보이지 않나요?</p>
+                        <ul className="space-y-1 text-gray-400">
+                          <li>• <span className="text-white font-semibold">스팸 메일함</span>을 확인해주세요</li>
+                          <li>• 이메일 도착까지 최대 5분 소요될 수 있습니다</li>
+                          <li>• 이메일 주소를 정확히 입력했는지 확인해주세요</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-400">
+                    이메일의 인증 링크를 클릭한 후 <Link to="/login" className="text-purple-400 hover:text-purple-300 font-bold underline">로그인</Link>해주세요.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {error && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 text-red-400">
               <span className="font-mono text-sm">ERROR: {error}</span>

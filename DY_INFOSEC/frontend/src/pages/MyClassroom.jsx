@@ -1,18 +1,27 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import { getUserEnrollments } from '../services/courseService'
-import { BookOpen, FileText, Users, Award } from 'lucide-react'
+import { getUserEnrollments, getCourseAssignments } from '../services/courseService'
+import CourseBriefingViewer from '../components/CourseBriefingViewer'
+import { BookOpen, FileText, Users, Award, Clock, CheckCircle } from 'lucide-react'
 
 export default function MyClassroom() {
   const { user } = useAuthStore()
   const [activeTab, setActiveTab] = useState('courses')
   const [enrollments, setEnrollments] = useState([])
+  const [assignments, setAssignments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingAssignments, setLoadingAssignments] = useState(false)
 
   useEffect(() => {
     loadEnrollments()
   }, [user])
+
+  useEffect(() => {
+    if (activeTab === 'assignments' && enrollments.length > 0) {
+      loadAssignments()
+    }
+  }, [activeTab, enrollments])
 
   const loadEnrollments = async () => {
     if (!user?.uid) return
@@ -24,6 +33,31 @@ export default function MyClassroom() {
     } catch (error) {
       console.error('Error loading enrollments:', error)
       setLoading(false)
+    }
+  }
+
+  const loadAssignments = async () => {
+    setLoadingAssignments(true)
+    try {
+      const allAssignments = []
+      for (const enrollment of enrollments) {
+        const courseId = enrollment.courseId || enrollment.course?.id
+        if (courseId) {
+          const courseAssignments = await getCourseAssignments(courseId)
+          courseAssignments.forEach(assignment => {
+            allAssignments.push({
+              ...assignment,
+              courseName: enrollment.course?.title || '강의',
+              courseId
+            })
+          })
+        }
+      }
+      setAssignments(allAssignments)
+    } catch (error) {
+      console.error('Error loading assignments:', error)
+    } finally {
+      setLoadingAssignments(false)
     }
   }
 
@@ -107,7 +141,9 @@ export default function MyClassroom() {
             </div>
           ) : (
             <div className="space-y-6">
-              {enrollments.map((enrollment) => (
+              {enrollments.map((enrollment) => {
+                const courseData = enrollment.course || null
+                return (
               <div key={enrollment.id} className="group bg-black/40 backdrop-blur-xl border border-white/10 p-8 hover:border-blue-500/50 transition-all">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-6">
@@ -116,7 +152,7 @@ export default function MyClassroom() {
                       <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-all"></div>
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black text-white mb-2">{enrollment.course.title}</h3>
+                      <h3 className="text-2xl font-black text-white mb-2">{courseData?.title || '강의 정보 없음'}</h3>
                       <p className="text-sm text-gray-400 font-mono">
                         진도: {enrollment.completedLectures}/{enrollment.totalLectures} 강의 완료
                       </p>
@@ -127,7 +163,7 @@ export default function MyClassroom() {
                       {enrollment.progress}%
                     </div>
                     <Link
-                      to={`/courses/${enrollment.course.id}/learn`}
+                      to={`/courses/${enrollment.course?.id || enrollment.courseId}/learn`}
                       className="px-8 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all inline-block"
                     >
                       학습하기 →
@@ -142,19 +178,86 @@ export default function MyClassroom() {
                     />
                   </div>
                 </div>
+                {courseData && (
+                  <div className="mt-8">
+                    <CourseBriefingViewer course={courseData} title="COURSE BRIEFING" />
+                  </div>
+                )}
               </div>
-            ))}
+            )})}
             </div>
           )
         )}
 
         {activeTab === 'assignments' && (
-          <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-12">
-            <div className="text-center py-12">
-              <FileText className="w-20 h-20 text-purple-400 mx-auto mb-6" />
-              <p className="text-gray-400 text-lg">제출할 과제가 없습니다.</p>
+          loadingAssignments ? (
+            <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-12">
+              <div className="text-center py-12">
+                <div className="text-gray-400">Loading...</div>
+              </div>
             </div>
-          </div>
+          ) : assignments.length === 0 ? (
+            <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-12">
+              <div className="text-center py-12">
+                <FileText className="w-20 h-20 text-purple-400 mx-auto mb-6" />
+                <p className="text-gray-400 text-lg">제출할 과제가 없습니다.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {assignments.map((assignment) => {
+                const dueDate = assignment.dueDate?.toDate?.() 
+                  ? assignment.dueDate.toDate() 
+                  : assignment.dueDate 
+                  ? new Date(assignment.dueDate) 
+                  : null
+                const isOverdue = dueDate && dueDate < new Date()
+                
+                return (
+                  <div key={assignment.id} className="bg-black/40 backdrop-blur-xl border border-white/10 p-8 hover:border-purple-500/50 transition-all">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className="px-3 py-1 text-xs font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                            {assignment.courseName}
+                          </span>
+                          {isOverdue ? (
+                            <span className="px-3 py-1 text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">
+                              마감됨
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/30">
+                              진행중
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-2xl font-black text-white mb-3">{assignment.title}</h3>
+                        <p className="text-gray-400 leading-relaxed mb-4">{assignment.description}</p>
+                        <div className="flex items-center gap-6 text-sm">
+                          <div className="flex items-center gap-2 text-gray-400">
+                            <Clock className="w-4 h-4" />
+                            <span>마감: {dueDate ? dueDate.toLocaleDateString('ko-KR') : '미정'}</span>
+                          </div>
+                          {assignment.points && (
+                            <div className="flex items-center gap-2 text-blue-400">
+                              <CheckCircle className="w-4 h-4" />
+                              <span>{assignment.points}점</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <Link
+                        to={`/courses/${assignment.courseId}/learn`}
+                        className="ml-6 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all"
+                      >
+                        과제 보기
+                      </Link>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )
         )}
 
         {activeTab === 'projects' && (

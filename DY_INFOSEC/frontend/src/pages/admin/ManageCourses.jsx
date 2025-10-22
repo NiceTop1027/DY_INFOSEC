@@ -15,9 +15,11 @@ export default function ManageCourses() {
     level: 'beginner',
     duration: '',
     instructor: '',
+    instructorId: '',
     thumbnail: '',
     price: 0,
-    maxStudents: 30
+    maxStudents: 30,
+    applicationDeadline: ''
   })
 
   useEffect(() => {
@@ -48,15 +50,23 @@ export default function ManageCourses() {
       level: 'beginner',
       duration: '',
       instructor: '',
+      instructorId: '',
       thumbnail: '',
       price: 0,
-      maxStudents: 30
+      maxStudents: 30,
+      applicationDeadline: ''
     })
     loadCourses()
   }
 
   const handleEdit = (course) => {
     setEditingCourse(course)
+    const deadlineDate = course.applicationDeadline?.toDate
+      ? course.applicationDeadline.toDate()
+      : course.applicationDeadline
+        ? new Date(course.applicationDeadline)
+        : null
+
     setFormData({
       title: course.title || '',
       description: course.description || '',
@@ -64,9 +74,11 @@ export default function ManageCourses() {
       level: course.level || 'beginner',
       duration: course.duration || '',
       instructor: course.instructor || '',
+      instructorId: course.instructorId || '',
       thumbnail: course.thumbnail || '',
       price: course.price || 0,
-      maxStudents: course.maxStudents || 30
+      maxStudents: course.maxStudents ?? course.capacity ?? 30,
+      applicationDeadline: deadlineDate ? deadlineDate.toISOString().slice(0, 16) : ''
     })
     setShowModal(true)
   }
@@ -84,11 +96,17 @@ export default function ManageCourses() {
       <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="mb-12 flex items-center justify-between">
+        <div className="mb-12 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <Link to="/admin" className="text-gray-400 hover:text-white mb-2 inline-block">← Back to Admin</Link>
             <h1 className="text-5xl font-black text-white mb-3">MANAGE COURSES</h1>
             <div className="w-32 h-1 bg-gradient-to-r from-blue-500 to-cyan-500 mb-4"></div>
+            <Link
+              to="/admin/course-manager"
+              className="inline-flex items-center gap-2 text-sm text-blue-300 hover:text-white"
+            >
+고급 커리큘럼 편집기로 이동 →
+            </Link>
           </div>
           <button
             onClick={() => {
@@ -100,9 +118,13 @@ export default function ManageCourses() {
                 level: 'beginner',
                 duration: '',
                 instructor: '',
+                instructorId: '',
                 thumbnail: '',
                 price: 0,
-                maxStudents: 30
+                maxStudents: 30,
+                applicationDeadline: '',
+                briefingContent: '',
+                curriculumContent: ''
               })
               setShowModal(true)
             }}
@@ -139,7 +161,7 @@ export default function ManageCourses() {
                 <h3 className="text-xl font-black text-white mb-2">{course.title}</h3>
                 <p className="text-gray-400 text-sm mb-4 line-clamp-2">{course.description}</p>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">등록: {course.enrollmentCount || 0}명</span>
+                  <span className="text-gray-500">등록: {course.enrollmentCount || 0} / {course.maxStudents || '∞'}명</span>
                   <span className={`px-3 py-1 text-xs font-bold ${
                     course.isActive 
                       ? 'bg-green-500/20 text-green-400 border border-green-500/30'
@@ -148,6 +170,11 @@ export default function ManageCourses() {
                     {course.isActive ? 'ACTIVE' : 'INACTIVE'}
                   </span>
                 </div>
+                {course.applicationDeadline && (
+                  <div className="mt-3 text-xs text-gray-500">
+                    신청 마감: {course.applicationDeadline.toDate ? course.applicationDeadline.toDate().toLocaleString() : new Date(course.applicationDeadline).toLocaleString()}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -223,7 +250,7 @@ export default function ManageCourses() {
                         type="text"
                         placeholder="e.g., 8 weeks"
                         value={formData.duration}
-                        onChange={(e) => setFormData({...formData, duration: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                         className="w-full px-4 py-3 bg-black/50 border border-white/10 text-white focus:outline-none focus:border-blue-500 transition-colors"
                       />
                     </div>
@@ -233,7 +260,51 @@ export default function ManageCourses() {
                       <input
                         type="text"
                         value={formData.instructor}
-                        onChange={(e) => setFormData({...formData, instructor: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
+                        className="w-full px-4 py-3 bg-black/50 border border-white/10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-300 mb-2">INSTRUCTOR UID</label>
+                      <input
+                        type="text"
+                        value={formData.instructorId}
+                        onChange={(e) => setFormData({ ...formData, instructorId: e.target.value })}
+                        className="w-full px-4 py-3 bg-black/50 border border-white/10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-300 mb-2">MAX STUDENTS</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.maxStudents}
+                        onChange={(e) => setFormData({ ...formData, maxStudents: e.target.value })}
+                        className="w-full px-4 py-3 bg-black/50 border border-white/10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-300 mb-2">APPLICATION DEADLINE</label>
+                      <input
+                        type="datetime-local"
+                        value={formData.applicationDeadline}
+                        onChange={(e) => setFormData({ ...formData, applicationDeadline: e.target.value })}
+                        className="w-full px-4 py-3 bg-black/50 border border-white/10 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-300 mb-2">INSTRUCTOR UID</label>
+                      <input
+                        type="text"
+                        value={formData.instructorId}
+                        onChange={(e) => setFormData({ ...formData, instructorId: e.target.value })}
                         className="w-full px-4 py-3 bg-black/50 border border-white/10 text-white focus:outline-none focus:border-blue-500 transition-colors"
                       />
                     </div>

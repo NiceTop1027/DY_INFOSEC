@@ -123,11 +123,20 @@ export default function NoticeDetail() {
 
           {/* Content */}
           <div className="p-8">
-            <div className="prose prose-invert max-w-none">
-              <div className="text-gray-300 text-lg leading-relaxed whitespace-pre-line">
-                {notice.content}
-              </div>
-            </div>
+            <div 
+              className="prose prose-invert max-w-none text-gray-300 text-base leading-relaxed"
+              dangerouslySetInnerHTML={{
+                __html: notice.content
+                  .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto my-4 rounded border border-white/10" />')
+                  .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline">$1</a>')
+                  .replace(/```([\s\S]*?)```/g, '<pre class="bg-black/60 border border-white/10 p-4 rounded my-4 overflow-x-auto"><code>$1</code></pre>')
+                  .replace(/`([^`]+)`/g, '<code class="bg-purple-500/10 border border-purple-500/20 text-purple-300 px-2 py-0.5 rounded">$1</code>')
+                  .replace(/### ([^\n]+)/g, '<h3 class="text-xl font-bold text-gray-200 mt-4 mb-2">$1</h3>')
+                  .replace(/## ([^\n]+)/g, '<h2 class="text-2xl font-bold text-white mt-6 mb-3">$1</h2>')
+                  .replace(/# ([^\n]+)/g, '<h1 class="text-3xl font-black text-white mt-8 mb-4 border-b border-purple-500/30 pb-2">$1</h1>')
+                  .replace(/\n/g, '<br/>')
+              }}
+            />
           </div>
 
           {/* Footer */}

@@ -6,7 +6,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  sendEmailVerification
 } from 'firebase/auth'
 import { createUserProfile, getUserProfile } from '../services/userService'
 
@@ -33,6 +34,7 @@ export const useAuthStore = create(
               email: userCredential.user.email,
               displayName: userCredential.user.displayName,
               photoURL: userCredential.user.photoURL,
+              emailVerified: userCredential.user.emailVerified,
               role: profileResult.success ? profileResult.data.role : 'student',
               ...profileResult.data,
             },
@@ -57,12 +59,10 @@ export const useAuthStore = create(
             displayName: displayName
           })
           
-          // Firestore에 사용자 프로필 생성
-          const profileResult = await createUserProfile(userCredential.user.uid, {
-            email: userCredential.user.email,
-            displayName: displayName,
-            photoURL: userCredential.user.photoURL,
-          })
+          // Firestore에 사용자 프로필 생성 (Functions에서 자동 생성됨)
+          // 잠시 대기 후 프로필 가져오기
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          const profileResult = await getUserProfile(userCredential.user.uid)
           
           set({
             user: {
@@ -70,11 +70,12 @@ export const useAuthStore = create(
               email: userCredential.user.email,
               displayName: displayName,
               photoURL: userCredential.user.photoURL,
-              role: profileResult.role || 'student',
+              role: profileResult.success ? profileResult.data.role : 'student',
             },
             isAuthenticated: true,
             loading: false,
           })
+          
           return { success: true }
         } catch (error) {
           set({ error: error.message, loading: false })
